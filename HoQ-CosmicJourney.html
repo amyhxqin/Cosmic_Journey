@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Heart of Quasars - Cosmic Journey</title>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+<link async href="http://fonts.googleapis.com/css?family=Anton" data-generated="http://enjoycss.com" rel="stylesheet" type="text/css"/>
+<style>
+/*body{
+	background-image:url('http://image.noelshack.com/fichiers/2016/45/1479054315-cosmicjourneybgreal.jpg');
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-position:absolute;
+	}*/
+#canvas {
+	padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+	border: 5px groove #FFF;
+	margin-top:42px;
+}
+
+#startScreen, #gameOverScreen {
+	
+	 margin: 0 auto;
+     text-align:center;
+     width:600px;
+     height: 600px;
+	 color:#FFF;
+	}
+	
+#scoreWon {
+	 margin: 0 auto;
+     text-align:center;
+     width:600px;
+	 color:#FFF;
+	}
+
+.titles {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  border: none;
+  font: normal 70px/normal "Anton", Helvetica, sans-serif;
+  color: rgb(255, 255, 255);
+  -o-text-overflow: clip;
+  text-overflow: clip;
+  text-shadow: 0 0 20px rgba(140,140,140,1) , 0 0 55px rgba(255,255,255,1) , 0 -20px 65px rgba(255,248,119,1) , 0 -40px 75px rgba(248,252,2,1) , 0 -60px 85px rgba(250,255,0,1) , 0 -80px 70px rgba(0,0,0,1) , 0 -90px 80px rgba(0,0,0,1) ;
+  padding-top: 90px;
+}
+
+.texts {
+  font: normal 18px/normal "Anton", Helvetica, sans-serif;
+  color:#FFF;
+  padding-top: 40px;
+  padding-left:5px;
+  padding-right:5px;
+  text-align:center;
+  margin: 0 auto;
+  width:600px;
+
+	}
+	
+.startButton, .restartButton, .backButton {
+  background: #ffffff;
+  background-image: -webkit-linear-gradient(top, #ffffff, #ebebeb);
+  background-image: -moz-linear-gradient(top, #ffffff, #ebebeb);
+  background-image: -ms-linear-gradient(top, #ffffff, #ebebeb);
+  background-image: -o-linear-gradient(top, #ffffff, #ebebeb);
+  background-image: linear-gradient(to bottom, #ffffff, #ebebeb);
+  -webkit-border-radius: 28;
+  -moz-border-radius: 28;
+  border-radius: 28px;
+  font-family: "Anton", Helvetica, sans-serif;
+  color: #000000;
+  font-size: 40px;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+  margin-left:5px;
+  margin-right:5px;
+}
+
+.startButton:hover, .restartButton:hover, .backButton:hover {
+  background: #ffffff;
+  text-decoration: none;
+  -webkit-box-shadow: 0px 1px 20px #ffffff;
+  -moz-box-shadow: 0px 1px 20px #ffffff;
+  box-shadow: 0px 1px 20px #ffffff;
+  
+}
+
+</style>
+</head>
+<body>
+	
+    <div id="startScreen" align="center">
+    <h1 class="titles">Cosmic Journey</h1>
+    <div class="texts"><p>Are you mighty enough to sail through the quasars? The longer you survive, the greater the amount of your rewards. Use your arrow keys to travel. You will change color once in a while and leave a trail of this color. Be careful! Do not let your head hit a trail that is the same colour or hit the space barriers!</p>
+    </div><br>
+    <input class="startButton" type="button" value="Start" />
+    </div>
+    <div id="gameOverScreen" style="display:none;" align="center">
+    <h1 class="titles">GAME OVER</h1>
+    <div class="texts"><div id="scoreWon"></div>
+    <h5>Game and background by AQ 2016</h5></div><br><br><br><br>
+    <input class="restartButton" type="button" value="Restart" />
+    <input class="backButton" type="button" value="Leave" />
+    </div>
+    <canvas id="canvas" width="600" height="600" style="display:none;">
+    <p>Your browser does not support CANVAS.</p>
+    </canvas>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+<script>
+$(document).ready(function(){
+	
+	$(".startButton").click(function () {
+        $("#startScreen").hide();
+        $("#gameOverScreen").hide();
+        $("#canvas").show();
+        init();
+		
+    });
+	
+	//Canvas
+	var canvas = $("#canvas")[0];
+	var ctx = canvas.getContext("2d");
+	var w = $("#canvas").width();
+	var h = $("#canvas").height();
+	
+	//Cell width
+	var cw = 30;
+	
+	//Direction
+	var d;
+	
+	//Player
+	var player_array;
+	var playerColor = '#ff0000';
+	
+	
+	function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+	function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+	
+	
+	/*var colorNumber = 1;
+	var remainder = colorNumber % 4*/
+	
+	
+	//Score
+	var score = 0;
+	
+	function init()
+	{
+		//Default direction
+		d = "right";
+		
+		create_player();
+		
+			//Keyboard controls
+	$(document).keydown(function(e){
+		var key = e.which;
+		if(key == "37" && d != "right") d = "left";
+		else if(key == "38" && d != "down") d = "up";
+		else if(key == "39" && d != "left") d = "right";
+		else if(key == "40" && d != "up") d = "down";
+
+	})
+		//Clear canvas
+		ctx.clearRect(0, 0, w, h);
+		
+		//Move the player
+		if(typeof game_loop != "undefined") clearInterval(game_loop);
+		game_loop = setInterval(paint, 140);
+		
+		//color_loop = setInterval(changeColor, 2000);
+		
+		
+	}
+	
+	//init();
+	
+	function create_player()
+	{
+		var length = 1; //Length of the player
+		player_array = []; //Empty array to start with
+		for(var i = length-1; i>=0; i--)
+		{
+			//This will create a horizontal player starting from the top left
+			player_array.push({x:9, y:9});
+		}
+	}
+
+	
+	//Lets paint the player now
+	function paint()
+	{
+		for(var i = 0; i < player_array.length; i++)
+		{
+		//Avoid trail behind player
+		/*ctx.fillStyle = "black";
+		ctx.fillRect(0, 0, w, h);
+		*/
+
+		var nx = player_array[i].x;
+		var ny = player_array[i].y;
+		//These were the position of the head cell.
+		//We will increment it to get the new head position
+		//Lets add proper direction based movement now
+		if(d == "right") nx++;
+		else if(d == "left") nx--;
+		else if(d == "up") ny--;
+		else if(d == "down") ny++;
+		
+		//incrementScore();
+		
+		var imgData;
+		var cellColor;
+		var imgDataTwo;
+		var cellTwoColor;
+		
+			imgData = ctx.getImageData(player_array[i].x * 30 + 15, player_array[i].y * 30 + 15, 1, 1);
+			red = imgData.data[0];
+			green = imgData.data[1];
+			blue = imgData.data[2];
+			
+			cellColor = rgbToHex(red, green, blue);
+			console.log ("CellColor = " + cellColor);
+			
+			/*imgDataTwo = ctx.getImageData(player_array[0].x * 30, player_array[0].y * 30, 1, 1);
+			redTwo = imgDataTwo.data[0];
+			greenTwo = imgDataTwo.data[1];
+			blueTwo = imgDataTwo.data[2];
+			
+			cellTwoColor = rgbToHex(redTwo, greenTwo, blueTwo);
+			console.log (cellTwoColor);*/
+			
+			if(check_collision(nx, ny, player_array) && playerColor == cellColor /*cellColor == cellTwoColor*/){
+			
+			console.log ('You lose');
+			clearInterval(game_loop);
+			//clearInterval(color_loop);
+			score = player_array.length;
+			gameOver();
+			
+		
+		}
+		
+		//Game over conditions: if the player hits the wall or itself
+		if(nx == -3 || nx == w/cw + 2|| ny == -3 || ny == h/cw + 2)
+		{
+			
+			clearInterval(game_loop);
+			//clearInterval(color_loop);
+			score = player_array.length;
+			gameOver(); 
+			/*//restart game
+			init();
+			return;*/
+
+		}
+	
+			var tail = {x: nx, y: ny};
+		
+		player_array.unshift(tail); //Puts back the tail as the first cell
+			
+			var remainder = player_array.length%5;
+			var quotient = Math.round(player_array.length/5);
+			//var sum = remainder + quotient;
+
+		for(var i = 1; i < player_array.length; i++)
+		{
+			
+			var c = player_array[i];
+			var q = player_array[quotient];
+			
+			if (i == 1){
+			//changeColor();
+			paint_cell(c.x, c.y);
+			}
+			if (remainder == 0){
+			changeColor();
+			paint_cell(c.x, c.y);
+			console.log('The remainder is ' + remainder);
+			return;
+			}
+			else{
+			//paint_cellMiddle(c.x, c.y);
+			paint_cell(q.x, q.y);
+			//console.log('The quotient is ' + quotient);
+				}
+				
+			
+		}
+		
+		
+		console.log(player_array.length);
+		}
+		
+	}
+	
+	//Add score
+	
+	/*function incrementScore () {
+		
+		score = score+1;
+		
+		}*/
+	
+	//Paint cells
+	function paint_cell(x, y)
+	{	
+		ctx.fillStyle = playerColor;
+		ctx.fillRect(x*cw, y*cw, cw, cw);
+		//changeColor();
+	}
+	
+	
+	function check_collision(x, y, array)
+	{
+		
+		for(var i = 0; i < array.length; i++)
+		{
+			
+			if(array[i].x == x && array[i].y == y){
+			 console.log('collision');
+			 return true;
+		
+			 }
+		}
+		return false;
+	}
+	
+	function changeColor (){
+		var colorResult = ['#ff0000', '#0000ff', '#ffff00', '#008000'][Math.floor(Math.random() * 4)];
+		if (playerColor != colorResult)
+		{
+			playerColor = "";
+			playerColor = colorResult;
+
+			}
+		else{
+			changeColor()
+			}
+		console.log('Player color: ' + playerColor);}
+		
+	function gameOver () {
+			
+			console.log('Color of death: ' + playerColor);
+			$("#canvas").hide();
+			$("#gameOverScreen").show();
+			document.getElementById("scoreWon").innerHTML = "The power of the Quasars has consumed your last bit of energy. Luckily, you have managed to collect " + score + " Quasarian souls.";
+			
+			$(".restartButton").click(function () {
+				$("#startScreen").hide();
+				$("#gameOverScreen").hide();
+				$("#canvas").show();
+				init();
+				
+			});
+			
+			$(".backButton").click(function () {
+				window.open("http://aftertheashesworks.wixsite.com/ataworkshop/programming");
+			});
+		   
+		}
+	
+	
+	
+})
+</script>
+</body>
+</html>
